@@ -1,0 +1,92 @@
+2024-04-09 16:36:04: Error occurred during processing contact : 
+2024-04-09 16:36:15: Error occurred during processing contact : 
+2024-04-09 16:36:25: Error occurred during processing contact : 
+2024-04-09 16:36:35: Error occurred during processing contact : 
+2024-04-09 16:40:25: Error occurred during processing contact : 
+2024-04-09 16:40:36: Error occurred during processing contact : 
+2024-04-09 16:40:46: Error occurred during processing contact : 
+2024-04-09 16:40:56: Error occurred during processing contact : 
+2024-04-09 16:44:04: Error occurred during processing contact : 
+2024-04-09 16:44:14: Error occurred during processing contact : 
+2024-04-09 16:44:25: Error occurred during processing contact : 
+2024-04-09 16:44:35: Error occurred during processing contact : 
+2024-04-09 16:48:52: Error occurred during processing contact : 
+2024-04-09 16:49:02: Error occurred during processing contact : 
+2024-04-09 16:49:13: Error occurred during processing contact : 
+2024-04-09 16:49:23: Error occurred during processing contact : 
+2024-04-09 16:55:31: Error occurred during processing contact : 
+2024-04-09 16:56:14: Error occurred during processing contact : 
+2024-04-09 16:56:56: Error occurred during processing contact : 
+2024-04-09 17:36:28: Error occurred during processing contact : 
+2024-04-09 17:36:48: Error occurred during processing contact : 
+2024-04-09 17:37:09: Error occurred during processing contact : 
+2024-04-09 17:53:03: Error occurred during processing contact : 
+2024-04-09 17:53:45: Error occurred during processing contact : 
+2024-04-09 17:57:49: Error occurred during processing contact : 
+2024-04-09 18:26:41: Error occurred during processing contact : 
+2024-04-09 18:26:51: Error occurred during processing contact : 
+2024-04-09 18:27:01: Error occurred during processing contact : 
+2024-04-09 18:27:12: Error occurred during processing contact : 
+2024-04-10 09:43:31: Error occurred during processing contact : 
+2024-04-10 09:43:41: Error occurred during processing contact : 
+2024-04-10 09:43:51: Error occurred during processing contact : 
+2024-04-10 09:50:41: Error occurred during processing contact : 
+2024-04-10 09:50:44: Error occurred during processing contact : 
+2024-04-10 09:50:44: Error occurred during processing contact : 
+2024-04-10 09:50:44: Error occurred during opening WhatsApp link: : Message: WebDriver session does not exist, or is not active
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:192:5
+InvalidSessionIDError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:447:5
+assert.that/<@chrome://remote/content/shared/webdriver/Assert.sys.mjs:485:13
+assert.session@chrome://remote/content/shared/webdriver/Assert.sys.mjs:37:4
+despatch@chrome://remote/content/marionette/server.sys.mjs:315:19
+execute@chrome://remote/content/marionette/server.sys.mjs:289:16
+onPacket/<@chrome://remote/content/marionette/server.sys.mjs:262:20
+onPacket@chrome://remote/content/marionette/server.sys.mjs:263:9
+_onJSONObjectReady/<@chrome://remote/content/marionette/transport.sys.mjs:494:20
+
+2024-04-10 10:14:00: Error occurred during processing contact : 
+2024-04-10 10:14:10: Error occurred during processing contact : 
+2024-04-10 10:14:20: Error occurred during processing contact : 
+2024-04-10 10:42:16: Error occurred during processing contact : 
+2024-04-10 14:28:54: Error occurred during processing contact : 
+2024-04-10 14:29:04: Error occurred during processing contact : 
+2024-04-10 15:03:28: Error occurred during processing contact : 
+2024-04-10 15:04:43: Error occurred during processing contact : 
+2024-04-10 15:05:58: Error occurred during processing contact : 
+2024-04-10 15:06:16: Error occurred during processing contact : 
+2024-04-10 15:06:16: Error occurred during processing contact : 
+2024-04-10 15:06:16: Error occurred during opening WhatsApp link: : Message: WebDriver session does not exist, or is not active
+Stacktrace:
+RemoteError@chrome://remote/content/shared/RemoteError.sys.mjs:8:8
+WebDriverError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:192:5
+InvalidSessionIDError@chrome://remote/content/shared/webdriver/Errors.sys.mjs:447:5
+assert.that/<@chrome://remote/content/shared/webdriver/Assert.sys.mjs:485:13
+assert.session@chrome://remote/content/shared/webdriver/Assert.sys.mjs:37:4
+despatch@chrome://remote/content/marionette/server.sys.mjs:315:19
+execute@chrome://remote/content/marionette/server.sys.mjs:289:16
+onPacket/<@chrome://remote/content/marionette/server.sys.mjs:262:20
+onPacket@chrome://remote/content/marionette/server.sys.mjs:263:9
+_onJSONObjectReady/<@chrome://remote/content/marionette/transport.sys.mjs:494:20
+
+2024-04-11 18:27:54: Error occurred during processing contact : 
+2024-04-11 18:28:04: Error occurred during processing contact : 
+2024-04-11 18:28:15: Error occurred during processing contact : 
+2024-04-11 18:28:25: Error occurred during processing contact : 
+2024-04-11 18:28:35: Error occurred during processing contact : 
+2024-04-11 18:28:45: Error occurred during processing contact : 
+2024-04-11 18:28:55: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during processing contact : 
+2024-04-11 19:18:14: Error occurred during opening WhatsApp link: : Message: Tried to run command without establishing a connection
+
+2024-04-11 19:30:42: Error occurred during processing contact : 
+2024-04-11 19:31:01: Error occurred during processing contact : 
+2024-04-11 19:31:01: Error occurred during opening WhatsApp link: : Message: Tried to run command without establishing a connection
+
+2024-04-11 19:38:43: Error occurred during processing contact : 
+2024-04-11 19:58:02: Error occurred during processing contact : 

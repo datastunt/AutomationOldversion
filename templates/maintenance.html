@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Maintenance Hours</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        #maintenanceMessage {
+            font-size: 24px;
+            color: red;
+        }
+
+        #currentTime {
+            font-size: 36px;
+            margin-top: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Maintenance Hours</h1>
+
+    <div id="maintenanceMessage"></div>
+
+    <div id="currentTime"></div>
+
+    <script>
+        function updateCurrentTime() {
+            var currentTimeElement = document.getElementById("currentTime");
+            var currentTime = new Date();
+            var hours = currentTime.getHours();
+            var minutes = currentTime.getMinutes();
+            var seconds = currentTime.getSeconds();
+            var timeString = hours + ":" + (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+            currentTimeElement.textContent = "Current Time: " + timeString;
+
+            // Check if it's maintenance hours
+            if (hours >= 22 || hours < 5) {
+                document.getElementById("maintenanceMessage").textContent = "Maintenance is currently ongoing.";
+            } else {
+                document.getElementById("maintenanceMessage").textContent = "";
+            }
+        }
+
+        // Update time every second
+        setInterval(updateCurrentTime, 1000);
+
+        // Initial call to display time immediately
+        updateCurrentTime();
+    </script>
+</body>
+</html>

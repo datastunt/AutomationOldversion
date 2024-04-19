@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WP Automation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <style>
+        form {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .custom-file-label::after {
+            content: "Browse";
+        }
+
+        .custom-file-input:focus~.custom-file-label::after {
+            border-color: #80bdff;
+        }
+
+        #startJobButton {
+            display: block;
+        }
+
+        #qrcodeImagePopup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        p {
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <h1 align="center">WA Automation</h1>
+    <p align="center">Must use Whatsapp Business for Better experience</p>
+
+    <div id="qrcodeImagePopup" style="display: none;">
+        <img src="" alt="QR Code" id="qrCodeImg">
+    </div>
+
+
+    <div align="center" id="UserPopup" style="display: none;">
+        <h2 id="login-user"></h2>
+    </div>
+
+
+
+    <form id="automationForm" method="post" action="/automation" enctype="multipart/form-data">
+        <div class="form-group">
+
+<!--            <label for="media_content_">Upload Media Content (Image/Video)</label>-->
+<!--            <div class="custom-file">-->
+<!--                <label class="custom-file-label" for="media_content_" id="media_content_label">Choose file</label>-->
+<!--                <input type="file" class="custom-file-input" id="media_content_" name="media_content"-->
+<!--                    accept=".jpg, .jpeg, .png, .mp4" onchange="updateMediaContentLabel(this)">-->
+<!--            </div>-->
+
+            <label for="video_content_">Upload Video Content</label>
+            <div class="custom-file">
+                <label class="custom-file-label" for="video_content_" id="video_content_label">Choose Video file</label>
+                <input type="file" class="custom-file-input" id="video_content_" accept=".mp4" onchange="updateVideoContentLabel(this)" name="video_content">
+            </div>
+
+
+            <div class="form-group">
+                <label for="message">Write or Copy/Paste Message</label>
+                <textarea class="form-control" id="message" name="message" rows="4"></textarea>
+            </div>
+            <br>
+
+            <div class="form-group">
+                <label for="bulkFile_">Upload Excel File for Messaging Job<span style="color: red;">*</span></label>
+                <div class="custom-file">
+                    <label class="custom-file-label" for="bulkFile_" id="bulkFile_label">Choose File</label>
+                    <input type="file" class="custom-file-input" id="bulkFile_" name="bulkFile"
+                        accept=".xls, .xlsx, .csv" onchange="updateExcelContentLabel(this)" required>
+                    <div class="invalid-feedback">Please select a file.</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+
+                <button type="button" class="btn btn-primary" id="loginButton" onclick="showQRCode()">Login</button>
+                <a href="/logout" class="btn btn-primary" id="logoutButton"
+                    style="float:right; display:none;">Logout</a>
+            </div>
+
+            <div class="form-group">
+
+                <button type="submit" class="btn btn-info" id="StartJob"
+                    style="display:none; width:100%; margin:auto;">Start Job</button>
+            </div>
+        </div>
+    </form>
+
+    <form action="/download-vcf" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="excelFile_">Upload Excel File to convert into VCF</label>
+            <div class="custom-file">
+                <label class="custom-file-label" for="excelFile_" id="excelFile_Label">Choose File</label>
+                <input type="file" style="display:inline;" class="custom-file-input" id="excelFile_" name="excelFile"
+                    accept=".xls, .xlsx" onchange="updateVcfContentLabel(this)" required>
+                <div class="invalid-feedback">Please select a file.</div>
+            </div>
+        </div>
+        <button style="display:inline;" type="submit" class="btn btn-primary">Download VCard</button>
+    </form>
+
+
+
+    <script>
+<!--        function updateMediaContentLabel(input) {-->
+<!--            var label = document.getElementById('media_content_label');-->
+<!--            label.innerText = input.files[0].name;-->
+<!--        }-->
+
+        function updateExcelContentLabel(input) {
+            var label = document.getElementById('bulkFile_label');
+            label.innerText = input.files[0].name;
+        }
+        function updateVcfContentLabel(input) {
+            var label = document.getElementById('excelFile_Label');
+            label.innerText = input.files[0].name;
+        }
+       function updateVideoContentLabel(input) {
+                  var label = document.getElementById('video_content_label');
+                  label.innerText = input.files[0].name;
+       }
+
+
+
+
+
+
+
+
+
+
+
+        function showQRCode() {
+            document.getElementById('loginButton').style.backgroundColor = 'green';
+
+            fetch('/qrcode')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('QR code image received:', data.qrcode);
+                    var qrCodeImg = document.getElementById('qrCodeImg');
+                    var qrCodeImgPop = document.getElementById('qrcodeImagePopup')
+                    var user = document.getElementById('login-user');
+                    var UserPop = document.getElementById('UserPopup');
+                    if (data.qrcode != "static/whatsapp_qr_code.png") {
+                        user.innerText = data.qrcode;
+                        user.style.display = 'block';
+                        UserPop.style.display = 'block';
+                        UserPop.style.border = '2px solid black'
+                        qrCodeImg.style.display = 'none';
+                        qrCodeImgPop.style.display = 'none';
+                        document.getElementById("logoutButton").style.display = 'block';
+                        document.getElementById("StartJob").style.display = 'block';
+                    } else {
+                        qrCodeImg.src = data.qrcode;
+                        user.style.display = 'none';
+                        UserPop.style.display = 'none';
+                        qrCodeImg.style.display = 'block';
+                        qrCodeImgPop.style.display = 'block';
+                    }
+
+                    // Hide the QR code popup after 15 seconds
+                    setTimeout(function () {
+                        hideQRCode();
+                    }, 15000); // 15 seconds in milliseconds
+
+                    // Add event listener to hide QR code when clicked anywhere
+                    document.body.addEventListener('click', hideQRCodeOnClick);
+
+                    // Run checkUser() after processing QR code data
+                    return checkUser();
+                })
+                .then(existUser => {
+                    var qrCodeImg = document.getElementById('qrCodeImg');
+                    var qrCodeImgPop = document.getElementById('qrcodeImagePopup')
+                    var user = document.getElementById('login-user');
+                    var UserPop = document.getElementById('UserPopup');
+                    if (existUser) {
+                        user.innerText = "[" + existUser.user + " - User Logged In" + "]";
+                        user.style.display = 'block';
+                        UserPop.style.display = 'block';
+                        qrCodeImg.style.display = 'none';
+                        qrCodeImgPop.style.display = 'none';
+                        document.getElementById("logoutButton").style.display = 'block';
+                        document.getElementById("StartJob").style.display = 'block';
+                    } else {
+                        user.style.display = 'none';
+                        UserPop.style.display = 'none';
+                        qrCodeImg.style.display = 'none';
+                        qrCodeImgPop.style.display = 'none';
+                        document.getElementById("logoutButton").style.display = 'none';
+                        document.getElementById("StartJob").style.display = 'none';
+
+                        // Hide the username popup after 15 seconds
+                        setTimeout(function () {
+                            hideUserNameOnClick();
+                        }, 15000); // 15 seconds in milliseconds
+
+                        // Add event listener to hide username when clicked anywhere
+                        document.body.addEventListener('click', hideUserNameOnClick);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function checkUser() {
+            return fetch('/checker')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .catch(error => {
+                    console.error('Error checking user:', error);
+                });
+        }
+
+        function hideQRCodeOnClick() {
+            hideQRCode();
+            document.body.removeEventListener('click', hideQRCodeOnClick);
+        }
+
+        function hideQRCode() {
+            document.getElementById('qrcodeImagePopup').style.display = 'none';
+        }
+
+        function hideUserNameOnClick() {
+            hideUserName();
+            document.body.removeEventListener('click', hideUserNameOnClick);
+        }
+
+        function hideUserName() {
+            var userNamePopup = document.getElementById('UserPopup');
+            userNamePopup.style.display = 'none';
+        }
+
+
+
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Report Output</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <!-- Include jspdf library -->
+    <style>
+
+        .center-block {
+            display: block;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+</head>
+<body>
+{% if result %}
+    <h2 align="center"></h2>
+        <table class="table table-dark table-hover">
+        <tr>
+            <th>Total contacts</th>
+            <th> {{ result['contact_length'] }} </th>
+        </tr>
+    </table>
+    <h2 align="center">Completed Jobs</h2>
+    <table class="table table-dark table-hover">
+        <tr>
+            <th>JobID</th>
+            <th>Contact</th>
+            <th>Status</th>
+            <th>Timestamp</th>
+        </tr>
+
+        {% for item in result['completed_task'] %}
+        <tr>
+            <td>{{ item['JobID'] }}</td>
+            <td>{{ item.get('contact', '') }}</td>
+            <td>{{ item['status'] }}</td>
+            <td>{{ item['timestamp'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br><br>
+
+    <h2 align="center">Uncompleted Jobs</h2>
+    <table class="table table-dark table-hover">
+        <tr>
+            <th>JobID</th>
+            <th>Contact</th>
+            <th>Reason</th>
+            <th>Timestamp</th>
+        </tr>
+        {% for item in result['uncompleted_task'] %}
+        <tr>
+            <td>{{ item['JobID'] }}</td>
+            <td>{{ item.get('contact', '') }}</td>
+            <td>{{ item['reason'] }}</td>
+            <td>{{ item['timestamp'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <h2 align="center">No jobs available</h2>
+{% endif %}
+<form action="/download_pdf" method="get">
+    <button type="submit" class="center-block btn btn-primary">Download PDF</button>
+</form>
+<br>
+<br>
+<form action="/" method="get">
+    <button type="submit" class="center-block btn btn-primary">Home</button>
+</form>
+</body>
+</html>
