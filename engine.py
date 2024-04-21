@@ -1,5 +1,5 @@
 import io
-import os
+import subprocess
 import sys
 import time
 import random
@@ -8,23 +8,27 @@ import matplotlib
 import pandas as pd
 from PIL import Image
 from io import BytesIO
-import datetime
+from flask import app, Flask
+from datetime import datetime
+from urllib3.exceptions import NewConnectionError
 from webdriver_setup import *
 from googletrans import Translator
 from matplotlib import pyplot as plt
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.common import NoSuchElementException, InvalidSessionIdException, WebDriverException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from datastorage import uncompleted_contact, completed_contact, current_contact_data_status
+from selenium.common.exceptions import InvalidSessionIdException, WebDriverException, NoSuchElementException, \
+    TimeoutException
+from datastorage import uncompleted_contact, completed_contact, current_contact_data_status, job_time
 
+app = Flask(__name__)
 matplotlib.use('Agg')
 terminate_flag = False
-completed_task = []
-uncompleted_task = []
-contact_persons = ""
 outer_driver = None
+UPLOAD_FOLDER = 'static/uploads'
+COMPRESSED_FOLDER = 'static/compressed'
+ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
 
 
 def handle_request(request_type):
@@ -62,16 +66,7 @@ def handle_request(request_type):
             return driver
         else:
             raise ValueError("Invalid request_type")
-    except InvalidSessionIdException:
-        # Retry the operation by calling handle_request with the same request_type
-        outer_driver = firefox_browser()
-        outer_driver.get("https://web.whatsapp.com/")
-        return outer_driver
-    except RecursionError:
-        outer_driver = firefox_browser()
-        outer_driver.get("https://web.whatsapp.com/")
-        return outer_driver
-    except WebDriverException:
+    except (InvalidSessionIdException, RecursionError, WebDriverException):
         outer_driver = firefox_browser()
         outer_driver.get("https://web.whatsapp.com/")
         return outer_driver
@@ -79,6 +74,7 @@ def handle_request(request_type):
 
 def take_qr_code_screenshot():
     driver = handle_request("take_qr_code_screenshot")
+    time.sleep(12.5)
     try:
         qr_code_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[aria-label='Scan me!']")))
@@ -101,37 +97,40 @@ def take_qr_code_screenshot():
         # Return the path to the image file
         return qr_code_image_path
     except InvalidSessionIdException:
-        # Handle the exception by reinitializing the driver
-        handle_request("take_qr_code_screenshot")
-        # Retry the operation or take alternative actions as needed
-        # For example, you might want to log in again or navigate to the desired page.
+        take_qr_code_screenshot()
+    except NewConnectionError:
+        take_qr_code_screenshot()
+    except TimeoutException:
         take_qr_code_screenshot()
     except NoSuchElementException:
         # Handle the exception by closing the driver and reopening it
         driver.quit()
         take_qr_code_screenshot()
     except:
-        select_user = WebDriverWait(driver, 3).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")))
+        select_user = driver.find_element(By.CSS_SELECTOR,
+                                          "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
         select_user.click()
-        time.sleep(1.2)
+        time.sleep(2.2)
         login_user = driver.find_element(By.CSS_SELECTOR, "div.xdod15v._ao3e.selectable-text.copyable-text")
         return login_user.text
 
 
-def check_user():
+def check_user(session):
     driver = handle_request("check_user")
     try:
-        time.sleep(30.5)
-        select_user = driver.find_element(By.CSS_SELECTOR, "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
+        time.sleep(15.5)
+        select_user = driver.find_element(By.CSS_SELECTOR,
+                                          "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
         select_user.click()
         time.sleep(1.2)
         login_user = driver.find_element(By.CSS_SELECTOR, "div.xdod15v._ao3e.selectable-text.copyable-text")
-        return login_user.text
+        username = session.setdefault('username', []).append(login_user.text)
+        return username
     except:
         return None
 
 
-# to log out the user,  if user is not logged in then qrcode function is called
+# To Log out the user,  if user is not logged in then qrcode function is called
 def user_logout():
     driver = handle_request("user_logout")
     driver.get("https://web.whatsapp.com/")
@@ -143,7 +142,8 @@ def user_logout():
         logout_button = driver.find_element(By.CSS_SELECTOR, "div[aria-label='Log out']")
         logout_button.click()
         time.sleep(1.9)
-        final_logout = driver.find_element(By.XPATH, "/html/body/div[1]/div/div/span[2]/div/div/div/div/div/div/div[3]/div/button[2]/div/div")
+        final_logout = driver.find_element(By.XPATH,
+                                           "/html/body/div[1]/div/div/span[2]/div/div/div/div/div/div/div[3]/div/button[2]/div/div")
         final_logout.click()
         user_logout_data = "User logout Successfully"
         return user_logout_data
@@ -153,19 +153,17 @@ def user_logout():
 
 
 # This function is to run the job
-def run_automation(bulk_file, media, text):
+def run_automation(bulk_file, media, text, session):
+    job_time()
+    driver = handle_request("run_automation")
     try:
-        driver = handle_request("run_automation")
         driver.get("https://web.whatsapp.com/")
         time.sleep(20.5)
 
         if not terminate_flag:
-            if media:
-                media.save(media.filename)
-                media = media.filename
-            else:
+            if media == "Invalid file format!":
                 media = None
-            bulk_file_management(driver, bulk_file, media, text)
+            bulk_file_management(driver, bulk_file, media, text, session)
         else:
             sys.exit()
     except Exception as e:
@@ -173,11 +171,7 @@ def run_automation(bulk_file, media, text):
         log_error(error_msg)
 
 
-# This function is used to send message and all other stuff
-def bulk_file_management(driver, bulk_file, media, text):
-    global contact_persons
-    global completed_task
-    global uncompleted_task
+def bulk_file_management(driver, bulk_file, media, text, session):
     if bulk_file and not terminate_flag:
         try:
             jobid = generate_job_id()
@@ -185,164 +179,217 @@ def bulk_file_management(driver, bulk_file, media, text):
             bulk_file = bulk_file.filename
             contacts_list = extracting_contacts(bulk_file)
             contact_persons = len(contacts_list)
+            session['contact_persons'] = contact_persons  # Update session data
+            contact_count = 1
             for number, name in contacts_list:
-                name = str(name)
-                name = name.rstrip().lstrip()
+                if contact_count == 100:
+                    session.clear()
+                job_time()
+                name = str(name).strip()
+
                 if not terminate_flag:
                     try:
+                        time.sleep(float(generate_random_time()))   # random time break before searching name.
                         # Find the search input textbox
                         search_btn = WebDriverWait(driver, 10).until(
                             EC.element_to_be_clickable((By.CSS_SELECTOR, "div[title='New chat']")))
-
-                        # Once the element is clickable, perform a click action
                         search_btn.click()
-                        time.sleep(2.5)
+                        time.sleep(2.1)
 
                         # Find the search box
                         search_input = WebDriverWait(driver, 5).until(
                             EC.presence_of_element_located((By.CSS_SELECTOR, "div[title='Search input textbox']")))
-
-                        # Clear the input box first
                         search_input.clear()
 
                         # Input the name into the search input
                         for letter in name:
                             search_input.send_keys(letter)
-                            # Add a small delay if needed
-                            time.sleep(0.1)  # Adjust this value as needed
-                        # Wait for some time (optional, if needed)
+                            time.sleep(0.1)
+
                         time.sleep(2.1)
 
                         try:
-                            # Locate the element to check if contact is unavailable
-                            selector = f"div.x9f619.x78zum5.xdt5ytf.x6s0dn4.x40yjcy.x2b8uid.x1c4vz4f.x2lah0s.xdl72j9.x1nhvcw1.xt7dq6l.x15uerrv.x13omvei.x1j3kn9t.x1m6arcz > div.x1f6kntn.x1fc57z9.x40yjcy > span._ao3e"
+                            # Check if contact is unavailable
+                            selector = "div.x9f619.x78zum5.xdt5ytf.x6s0dn4.x40yjcy.x2b8uid.x1c4vz4f.x2lah0s.xdl72j9.x1nhvcw1.xt7dq6l.x15uerrv.x13omvei.x1j3kn9t.x1m6arcz > div.x1f6kntn.x1fc57z9.x40yjcy > span._ao3e"
                             select_unavailable_contact = driver.find_element(By.CSS_SELECTOR, selector)
                             condition_text = select_unavailable_contact.text
                             condition = f"No results found for '{name}'"
                             if condition_text == condition:
-                                # Code to handle contact being unavailable
-                                back_btn = driver.find_element(By.XPATH,
-                                                               "//*[@id='app']/div/div[2]/div[2]/div[1]/span/div/span/div/div[1]/div[2]/button")
-                                back_btn.click()
-                                timestamp = datetime.now().strftime('%H:%M:%S %d-%m-%Y')
-                                unavailable_contact_data = {'JobID': jobid,
-                                                            'contact': name,
-                                                            'status': "Unavailable on WhatsApp.",
-                                                            'timestamp': timestamp
-                                                            }
-                                current_contact_data_status([unavailable_contact_data])
-                                uncompleted_contact([unavailable_contact_data])
-                                uncompleted_task.append(unavailable_contact_data)
+                                handle_unavailable_contact(driver, name, number, jobid, session)
+                            contact_count = contact_count + 1
                         except NoSuchElementException:
                             search_input.send_keys(Keys.ENTER)
                             time.sleep(2.1)
                             if text:
-                                select_text_box = WebDriverWait(driver, 5).until(EC.presence_of_element_located(
-                                    (By.CSS_SELECTOR, "div[role='textbox'][title='Type a message']")))
-                                # Once the element is present, perform actions on it
-                                select_text_box.click()
-                                # Clear the text box first
-                                select_text_box.clear()
-
-                                if "{name}" in text:
-                                    translator = Translator()
-                                    translated_text = translator.translate(name, src='en', dest='hi')
-                                    user = translated_text.text
-                                    text_data = text.replace("{name}", user)
-                                else:
-                                    text_data = text
-                                for msg in text_data:
-                                    select_text_box.send_keys(msg)
-                                    time.sleep(0.1)
-
+                                handle_text_message(driver, text, name)
                             if media:
-                                attach_btn = driver.find_element(By.CSS_SELECTOR, "div.x11xpdln.x1d8287x.x1h4ghdb")
-                                driver.execute_script("arguments[0].click();", attach_btn)
-                                time.sleep(2.5)
-
-                                # Wait for the parent li element to be present in the DOM
-                                # select_media = driver.find_element(By.CSS_SELECTOR, "div.x1c4vz4f.xs83m0k.xdl72j9.x1g77sc7.x78zum5.xozqiw3.x1oa3qoh.x12fk4p8.xeuugli.x2lwn1j.x1nhvcw1.x1q0g3np.x6s0dn4.x1ypdohk.x1vqgdyp.x1i64zmx.x1gja9t")
-                                # Click the input element to trigger the file selection dialog
-
-                                select_media_input = driver.find_element(By.CSS_SELECTOR,
-                                                                         "input[type='file'][accept='image/*,video/mp4,video/3gpp,video/quicktime']")
-                                media_absolute_path = os.path.abspath(media)
-                                select_media_input.send_keys(media_absolute_path)
-
-                                # select_media.click()
-
-                            time.sleep(2.1)
-
-                            if text and media or media:
-                                # To send message
-                                send_button = driver.find_element(By.CSS_SELECTOR,
-                                                                  "#app > div > div.two._aigs > div._aigu > div._aigv._aigz > span > div > span > div > div > div.x1n2onr6.xyw6214.x78zum5.x1r8uery.x1iyjqo2.xdt5ytf.x1hc1fzr.x6ikm8r.x10wlt62 > div > div._ajwz > div._ajx2 > div > div > span")
-                                # Click the send button
-                                send_button.click()
-
-                            if text and not media:
-                                send_button_selector = 'button[aria-label="Send"].x1c4vz4f.x2lah0s.xdl72j9.xfect85.x1iy03kw.x1lfpgzf'
-                                send_button = driver.find_element(By.CSS_SELECTOR, send_button_selector)
-                                send_button.click()
-
-                            timestamp = datetime.now().strftime('%H:%M:%S %d-%m-%Y')
-                            avlbl_contact_data = {'JobID': jobid,
-                                                  'contact': name,
-                                                  'status': "Message sent successfully.",
-                                                  'timestamp': timestamp
-                                                  }
-                            current_contact_data_status([avlbl_contact_data])
-                            completed_contact([avlbl_contact_data])
-                            completed_task.append(avlbl_contact_data)
+                                handle_media(driver, media)
+                            handle_send_button(driver, text, media, contact_count)
+                            handle_available_contact(name, number, jobid, session)
+                            contact_count = contact_count + 1
                         except Exception as e:
+                            error_msg = f"Error occurred during searching contact : {str(e)}"
+                            log_error(error_msg)
                             pass
                     except Exception as e:
-                        error_msg = f"Error occurred during processing contact : "
-                        log_error(error_msg)
+                        handle_error_contact(name, e)
                         continue
-
                 else:
                     sys.exit()
         except Exception as e:
-            error_msg = f"Error occurred during opening bulk file contact: {str(e)}"
-            log_error(error_msg)
+            handle_error_opening_bulk_file(e)
         finally:
-            os.remove(bulk_file)
-            if media:
-                os.remove(media)
+            remove_files(bulk_file, media)
+
+
+def handle_unavailable_contact(driver, name, number, jobid, session):
+    back_btn = driver.find_element(By.XPATH,
+                                   "//*[@id='app']/div/div[2]/div[2]/div[1]/span/div/span/div/div[1]/div[2]/button")
+    back_btn.click()
+    timestamp = datetime.now().strftime('%H:%M:%S %d-%m-%Y')
+    unavailable_contact_data = {
+        'jobid': jobid,
+        'contact_name': name,
+        'contact_number': number,
+        'status': "contact unavailable.",
+        'timestamp': timestamp
+    }
+    current_contact_data_status([unavailable_contact_data])
+    uncompleted_contact([unavailable_contact_data])
+    session.setdefault('uncompleted_task', []).append(unavailable_contact_data)
+
+
+def handle_available_contact(name, number, jobid, session):
+    timestamp = datetime.now().strftime('%H:%M:%S %d-%m-%Y')
+    avlbl_contact_data = {
+        'jobid': jobid,
+        'contact_name': name,
+        'contact_number': number,
+        'status': "Message sent successfully.",
+        'timestamp': timestamp
+    }
+    current_contact_data_status([avlbl_contact_data])
+    completed_contact([avlbl_contact_data])
+    session.setdefault('completed_task', []).append(avlbl_contact_data)
+
+
+def handle_text_message(driver, text, name):
+    select_text_box = WebDriverWait(driver, 5).until(
+        EC.presence_of_element_located((By.CSS_SELECTOR, "div[role='textbox'][title='Type a message']")))
+    select_text_box.click()
+    select_text_box.clear()
+    if "{name}" in text:
+        translator = Translator()
+        translated_text = translator.translate(name, src='en', dest='hi')
+        user = translated_text.text
+        text_data = text.replace("{name}", user)
+    else:
+        text_data = text
+    for msg in text_data:
+        select_text_box.send_keys(msg)
+        time.sleep(0.1)
+
+
+def handle_media(driver, media):
+    attach_btn = driver.find_element(By.CSS_SELECTOR, "div.x11xpdln.x1d8287x.x1h4ghdb")
+    driver.execute_script("arguments[0].click();", attach_btn)
+    time.sleep(1.5)
+
+    select_media_input = driver.find_element(By.CSS_SELECTOR,
+                                             "input[type='file'][accept='image/*,video/mp4,video/3gpp,video/quicktime']")
+
+    file_name = media
+    file_absolute_path = os.path.abspath(os.path.join('static', 'uploads', file_name))
+    select_media_input.send_keys(file_absolute_path)
+
+
+def handle_send_button(driver, text, media, contact_count):
+    if text and media or media:
+        if contact_count == 1:
+            time.sleep(4.5)
+            send_button_selector = 'div[aria-label="Send"]'
+            send_button = driver.find_element(By.CSS_SELECTOR, send_button_selector)
+            send_button.click()
+        else:
+            time.sleep(2.3)
+            send_button_selector = 'span[data-icon="send"]'
+            send_button = driver.find_element(By.CSS_SELECTOR, send_button_selector)
+            send_button.click()
+    elif text and not media:
+        time.sleep(1.9)
+        send_button_selector = 'button[aria-label="Send"].x1c4vz4f.x2lah0s.xdl72j9.xfect85.x1iy03kw.x1lfpgzf'
+        send_button = driver.find_element(By.CSS_SELECTOR, send_button_selector)
+        send_button.click()
+    time.sleep(1.5)
+
+
+def handle_error_contact(name, e):
+    error_msg = f"Error occurred during processing contact {name}: {str(e)}"
+    log_error(error_msg)
+
+
+def handle_error_opening_bulk_file(e):
+    error_msg = f"Error occurred during opening bulk file contact: {str(e)}"
+    log_error(error_msg)
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def compress_video(input_path, output_path):
+    command = f'ffmpeg -i {input_path} -vf "scale=trunc(iw/2)*2:trunc(ih/2)*2" -b:v 1M {output_path}'
+    subprocess.run(command, shell=True)
+
+
+def upload_file(file):
+    app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+    app.config['COMPRESSED_FOLDER'] = COMPRESSED_FOLDER
+    if file and allowed_file(file.filename):
+        filename = file.filename
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
+        if os.path.getsize(filepath) > 64 * 1024 * 1024:  # Check if file size is greater than 64MB
+            compressed_filename = f'compressed_{filename}'
+            compressed_filepath = os.path.join(app.config['COMPRESSED_FOLDER'], compressed_filename)
+            compress_video(filepath, compressed_filepath)
+            return compressed_filename
+        else:
+            return filename
+    else:
+        return 'Invalid file format!'
+
+
+def remove_files(bulk_file, media):
+    os.remove(bulk_file)
+    if media:
+        file_absolute_path = os.path.abspath(os.path.join('static', 'uploads', media))
+        os.remove(file_absolute_path)
 
 
 # this function is used to extract contact name and number from uploaded excel
 def extracting_contacts(bulk_file):
-    all_sheets_data = pd.read_excel(bulk_file, sheet_name=None)
-    contacts_list = []
-    for sheet_name, sheet_data in all_sheets_data.items():
-        if sheet_data is not None and not sheet_data.empty:
-            for index, row in sheet_data.iterrows():
-                contacts_list.append((row['Number'], row['Name']))
-    return contacts_list
+    try:
+        # Read the Excel file
+        all_sheets_data = pd.read_excel(bulk_file, sheet_name=None)
+        contacts_list = []
+
+        # Iterate through all sheets and extract contacts
+        for sheet_name, sheet_data in all_sheets_data.items():
+            if sheet_data is not None and not sheet_data.empty:
+                for index, row in sheet_data.iterrows():
+                    # Extract the contact information (assuming 'Number' and 'Name' are column names)
+                    contacts_list.append((row['Number'], row['Name']))
+
+        return contacts_list
+    except Exception as e:
+        # Handle any exceptions
+        error_msg = f"Error occurred during contact extraction: {str(e)}"
+        log_error(error_msg)
+        return []
 
 
-# To manage the job times
-def job_time():
-    current_hour = datetime.datetime.now().strftime('%H:%M:%S')
-    # Checking if current time is between "10:00:00" and "23:59:59" or "00:00:00" and "05:00:00"
-    if "22:00:00" <= current_hour <= "23:59:59" or "00:00:00" <= current_hour <= "05:00:00":
-        print("Sleeping until 05:00:00")
-        # Calculate time difference until 05:00:00
-        target_time = datetime.datetime.strptime("05:00:00", "%H:%M:%S")
-        current_time = datetime.datetime.strptime(current_hour, "%H:%M:%S")
-        time_difference = (target_time - current_time).total_seconds()
-        time.sleep(time_difference)
-
-    else:
-        pass
-
-
-from datetime import datetime
 # Function to log errors
-
-
 def log_error(error_msg):
     with open('error_log.txt', 'a') as f:
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -354,6 +401,14 @@ def kill_automation():
     global terminate_flag
     terminate_flag = True
     return terminate_flag
+
+
+def generate_random_time():
+    seconds_list = [1, 2, 3, 4, 5]
+    li_item = random.choice(seconds_list)
+    sequence = [f'{li_item}.{i}' for i in range(li_item, 11)]
+    random_time = random.choice(sequence)
+    return random_time
 
 
 # TO generate job ID
@@ -386,7 +441,7 @@ def generate_pdf(df):
 def create_vcf(input_excel):
     try:
         # Read Excel file into DataFrame
-        df = pd.read_excel(input_excel)
+        df = pd.read_excel(input_excel, dtype={'Number': str})  # Force 'Number' column to be read as string
 
         # Create output directory for vCards
         output_dir = "vcards"
@@ -426,4 +481,6 @@ def create_vcf(input_excel):
         # Return the list of generated vCard file paths
         return vcf_paths
     except Exception as e:
-        pass
+        error_msg = f"Error occurred during converting vcf : {str(e)}"
+        log_error(error_msg)  # Make sure log_error function is properly implemented
+        raise  # Reraise the exception for further handling or debugging
