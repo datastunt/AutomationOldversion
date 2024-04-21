@@ -19,26 +19,28 @@
 </head>
 <body>
 {% if result %}
-    <h2 align="center"></h2>
+    <h2 align="center">{{ result['username'] }}</h2>
         <table class="table table-dark table-hover">
         <tr>
             <th>Total contacts</th>
-            <th> {{ result['contact_length'] }} </th>
+            <th> {{ result['contact_persons'] }} </th>
         </tr>
     </table>
     <h2 align="center">Completed Jobs</h2>
     <table class="table table-dark table-hover">
         <tr>
             <th>JobID</th>
-            <th>Contact</th>
+            <th>Contact Name</th>
+            <th>Contact Number</th>
             <th>Status</th>
             <th>Timestamp</th>
         </tr>
 
         {% for item in result['completed_task'] %}
         <tr>
-            <td>{{ item['JobID'] }}</td>
-            <td>{{ item.get('contact', '') }}</td>
+            <td>{{ item['jobid'] }}</td>
+            <td>{{ item['contact_name'] }}</td>
+            <td>{{ item['contact_number'] }}</td>
             <td>{{ item['status'] }}</td>
             <td>{{ item['timestamp'] }}</td>
         </tr>
@@ -51,15 +53,17 @@
     <table class="table table-dark table-hover">
         <tr>
             <th>JobID</th>
-            <th>Contact</th>
+            <th>Contact Name</th>
+            <th>Contact Number</th>
             <th>Reason</th>
             <th>Timestamp</th>
         </tr>
         {% for item in result['uncompleted_task'] %}
         <tr>
-            <td>{{ item['JobID'] }}</td>
-            <td>{{ item.get('contact', '') }}</td>
-            <td>{{ item['reason'] }}</td>
+            <td>{{ item['jobid'] }}</td>
+            <td>{{ item['contact_name'] }}</td>
+            <td>{{ item['contact_number'] }}</td>
+            <td>{{ item['status'] }}</td>
             <td>{{ item['timestamp'] }}</td>
         </tr>
         {% endfor %}
@@ -67,13 +71,13 @@
 {% else %}
     <h2 align="center">No jobs available</h2>
 {% endif %}
-<form action="/download_pdf" method="get">
-    <button type="submit" class="center-block btn btn-primary">Download PDF</button>
-</form>
+
+    <form action="/download_pdf" method="get">
+         <button type="submit" class="center-block btn btn-primary">Download PDF</button>
+    </form>
 <br>
-<br>
-<form action="/" method="get">
-    <button type="submit" class="center-block btn btn-primary">Home</button>
-</form>
+<div align="center" class="form-group">
+    <a href="/" class="btn btn-primary">Home</a>
+</div>
 </body>
 </html>

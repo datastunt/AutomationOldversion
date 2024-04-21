@@ -9,18 +9,18 @@ import pandas as pd
 from PIL import Image
 from io import BytesIO
 from flask import app, Flask
-from datetime import datetime
-from urllib3.exceptions import NewConnectionError
 from webdriver_setup import *
+from datetime import datetime
 from googletrans import Translator
 from matplotlib import pyplot as plt
 from selenium.webdriver.common.by import By
+from urllib3.exceptions import NewConnectionError
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import InvalidSessionIdException, WebDriverException, NoSuchElementException, \
-    TimeoutException
+from selenium.common.exceptions import InvalidSessionIdException, WebDriverException, NoSuchElementException, TimeoutException
 from datastorage import uncompleted_contact, completed_contact, current_contact_data_status, job_time
+
 
 app = Flask(__name__)
 matplotlib.use('Agg')
@@ -40,8 +40,8 @@ def handle_request(request_type):
             outer_driver = global_driver
             return outer_driver
         elif request_type == "take_qr_code_screenshot" and outer_driver is not None:
-            outer_driver.get("https://web.whatsapp.com/")
-            return outer_driver
+            driver = outer_driver.get("https://web.whatsapp.com/")
+            return driver
         elif request_type == "run_automation" and outer_driver is not None:
             return outer_driver
         elif request_type == "run_automation" and outer_driver is None:
@@ -118,7 +118,7 @@ def take_qr_code_screenshot():
 def check_user(session):
     driver = handle_request("check_user")
     try:
-        time.sleep(15.5)
+        time.sleep(25.5)
         select_user = driver.find_element(By.CSS_SELECTOR,
                                           "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
         select_user.click()
@@ -127,7 +127,7 @@ def check_user(session):
         username = session.setdefault('username', []).append(login_user.text)
         return username
     except:
-        return None
+        pass
 
 
 # To Log out the user,  if user is not logged in then qrcode function is called

@@ -9,17 +9,18 @@ app.secret_key = '@wpAutomation321'
 
 @app.route("/")
 def home():
+    session.clear()
     return render_template('index.html')
 
 
 @app.route("/automation", methods=['POST'])
 def automation():
+    session.clear()
     # media = request.files.get('media_content')
     video = request.files.get('video_content')
     video = upload_file(video)
     text = request.form.get('message')
     bulk_file = request.files.get('bulkFile')
-    session.clear()
     run_automation(bulk_file, video, text, session)
     completed_task = session.get('completed_task', [])
     uncompleted_task = session.get('uncompleted_task', [])
