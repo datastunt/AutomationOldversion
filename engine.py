@@ -40,7 +40,7 @@ def handle_request(request_type):
             outer_driver = global_driver
             return outer_driver
         elif request_type == "take_qr_code_screenshot" and outer_driver is not None:
-            driver = outer_driver.get("https://web.whatsapp.com/")
+            driver = outer_driver
             return driver
         elif request_type == "run_automation" and outer_driver is not None:
             return outer_driver
@@ -58,6 +58,7 @@ def handle_request(request_type):
             return driver
         elif request_type == "check_user" and outer_driver is not None:
             driver = outer_driver
+            driver.get("https://web.whatsapp.com/")
             return driver
         elif request_type == "check_user" and outer_driver is None:
             global_driver = firefox_browser()
@@ -96,23 +97,29 @@ def take_qr_code_screenshot():
         qr_code_image.save(qr_code_image_path)
         # Return the path to the image file
         return qr_code_image_path
-    except InvalidSessionIdException:
-        take_qr_code_screenshot()
-    except NewConnectionError:
-        take_qr_code_screenshot()
+
+    except (InvalidSessionIdException, NewConnectionError):
+        return take_qr_code_screenshot()
     except TimeoutException:
-        take_qr_code_screenshot()
+        driver.delete_all_cookies()
+        driver.get("https://web.whatsapp.com/")
     except NoSuchElementException:
+        driver.delete_all_cookies()
+        driver.get("https://web.whatsapp.com/")
         # Handle the exception by closing the driver and reopening it
-        driver.quit()
-        take_qr_code_screenshot()
-    except:
-        select_user = driver.find_element(By.CSS_SELECTOR,
-                                          "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
-        select_user.click()
-        time.sleep(2.2)
-        login_user = driver.find_element(By.CSS_SELECTOR, "div.xdod15v._ao3e.selectable-text.copyable-text")
-        return login_user.text
+    except Exception as e:
+        error_msg = f"Error occurred during taking qr code SS: {str(e)}"
+        log_error(error_msg)
+        try:
+            select_user = driver.find_element(By.CSS_SELECTOR,
+                                              "div.x10l6tqk.x13vifvy.x17qophe.x78zum5.x6s0dn4.xl56j7k.xh8yej3.x5yr21d.x705qin.xsp8fsz")
+            select_user.click()
+            time.sleep(1.2)
+            login_user = driver.find_element(By.CSS_SELECTOR, "div.xdod15v._ao3e.selectable-text.copyable-text")
+            username = login_user.text
+            return username
+        except:
+            driver.get("https://web.whatsapp.com/")
 
 
 def check_user(session):
@@ -133,7 +140,6 @@ def check_user(session):
 # To Log out the user,  if user is not logged in then qrcode function is called
 def user_logout():
     driver = handle_request("user_logout")
-    driver.get("https://web.whatsapp.com/")
     time.sleep(10.2)
     try:
         select_three_dots = driver.find_element(By.CSS_SELECTOR, 'div[title="Menu"]')
@@ -202,7 +208,8 @@ def bulk_file_management(driver, bulk_file, media, text, session):
                         search_input.clear()
 
                         # Input the name into the search input
-                        for letter in name:
+                        number = str(number)
+                        for letter in number:
                             search_input.send_keys(letter)
                             time.sleep(0.1)
 

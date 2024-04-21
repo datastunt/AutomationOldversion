@@ -9,7 +9,6 @@ app.secret_key = '@wpAutomation321'
 
 @app.route("/")
 def home():
-    session.clear()
     return render_template('index.html')
 
 
