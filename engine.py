@@ -75,6 +75,7 @@ def handle_request(request_type):
 
 def take_qr_code_screenshot():
     driver = handle_request("take_qr_code_screenshot")
+    driver.get("https://web.whatsapp.com/")
     time.sleep(12.5)
     try:
         qr_code_element = WebDriverWait(driver, 10).until(
