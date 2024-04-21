@@ -1,4 +1,5 @@
 import io
+import os
 import subprocess
 import sys
 import time
@@ -29,6 +30,7 @@ outer_driver = None
 UPLOAD_FOLDER = 'static/uploads'
 COMPRESSED_FOLDER = 'static/compressed'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
+img_dir = "static/whatsapp_qr_code.png"
 
 
 def handle_request(request_type):
@@ -75,7 +77,8 @@ def handle_request(request_type):
 
 def take_qr_code_screenshot():
     driver = handle_request("take_qr_code_screenshot")
-    driver.get("https://web.whatsapp.com/")
+    if img_dir:
+        os.remove("static/whatsapp_qr_code.png")
     time.sleep(12.5)
     try:
         qr_code_element = WebDriverWait(driver, 10).until(
