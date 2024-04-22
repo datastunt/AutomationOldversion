@@ -60,7 +60,6 @@ def handle_request(request_type):
             return driver
         elif request_type == "check_user" and outer_driver is not None:
             driver = outer_driver
-            driver.get("https://web.whatsapp.com/")
             return driver
         elif request_type == "check_user" and outer_driver is None:
             global_driver = firefox_browser()
