@@ -87,6 +87,7 @@
                 <label class="custom-file-label" for="video_content_" id="video_content_label">Choose Video file</label>
                 <input type="file" class="custom-file-input" id="video_content_" accept=".mp4" onchange="updateVideoContentLabel(this)" name="video_content">
             </div>
+            <div id="video_error_message" style="color: red; display: none;">Video size must be less than 64MB</div>
 
 
             <div class="form-group">
@@ -149,9 +150,24 @@
             var label = document.getElementById('excelFile_Label');
             label.innerText = input.files[0].name;
         }
-       function updateVideoContentLabel(input) {
-                  var label = document.getElementById('video_content_label');
-                  label.innerText = input.files[0].name;
+
+       function updateVideoContentLabel(input)
+       {
+            var label = document.getElementById('video_content_label');
+            label.innerText = input.files[0].name
+            var errorMessage = document.getElementById('video_error_message');
+            var fileSize = input.files[0].size / (1024 * 1024); // File size in MB
+
+            if (fileSize > 64) {
+                // Display error message and reset file input
+                errorMessage.style.display = 'block';
+                input.value = ''; // Clear the file input
+                label.innerText = 'Choose Video file'; // Reset label text
+            } else {
+                // Update label text with file name
+                label.innerText = input.files[0].name;
+                errorMessage.style.display = 'none'; // Hide error message
+            }
        }
 
 

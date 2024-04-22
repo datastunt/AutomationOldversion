@@ -79,7 +79,7 @@ def take_qr_code_screenshot():
     driver = handle_request("take_qr_code_screenshot")
     if img_dir:
         os.remove("static/whatsapp_qr_code.png")
-    time.sleep(12.5)
+    time.sleep(5.5)
     try:
         qr_code_element = WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "canvas[aria-label='Scan me!']")))
