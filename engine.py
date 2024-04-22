@@ -30,7 +30,6 @@ outer_driver = None
 UPLOAD_FOLDER = 'static/uploads'
 COMPRESSED_FOLDER = 'static/compressed'
 ALLOWED_EXTENSIONS = {'mp4', 'avi', 'mov'}
-img_dir = "static/whatsapp_qr_code.png"
 
 
 def handle_request(request_type):
@@ -76,8 +75,6 @@ def handle_request(request_type):
 
 def take_qr_code_screenshot():
     driver = handle_request("take_qr_code_screenshot")
-    if img_dir:
-        os.remove("static/whatsapp_qr_code.png")
     time.sleep(5.5)
     try:
         qr_code_element = WebDriverWait(driver, 10).until(
@@ -123,6 +120,7 @@ def take_qr_code_screenshot():
             return username
         except:
             driver.get("https://web.whatsapp.com/")
+
 
 
 def check_user(session):
